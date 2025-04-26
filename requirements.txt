@@ -1,0 +1,5 @@
+torch==2.7.0
+opencv-python==4.10.0.84
+gpiozero==1.6.2
+tkgpio==0.1.2
+numpy==1.26.4
