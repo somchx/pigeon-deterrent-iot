@@ -1,8 +1,8 @@
 from gpiozero import LED, Buzzer, MotionSensor  # type: ignore
 from time import sleep
 import subprocess
-import paho.mqtt.client as mqtt
-from paho.mqtt.enums import CallbackAPIVersion
+import paho.mqtt.client as mqtt # type: ignore
+from paho.mqtt.enums import CallbackAPIVersion # type: ignore
 
 # Setup GPIO pins
 led = LED(22)
@@ -23,7 +23,8 @@ TOPIC_SUB = "house/camera"
 
 def on_connect(client, userdata, flags, reason_code, properties):
     print(f"[MQTT] Connected with result code {reason_code}")
-    client.subscribe(TOPIC_SUB)
+    client.subscribe("house/camera")
+    client.subscribe("house/bird")  # <== Subscribe new topic
 
 def on_message(client, userdata, msg):
     global manual_open, camera_enabled, camera_process
@@ -31,21 +32,27 @@ def on_message(client, userdata, msg):
     print(f"[MQTT] {msg.topic}: {msg.payload}")
     msg_str = msg.payload.decode("utf-8").strip().upper()
 
-    if msg_str == 'OPEN':
-        print("[ACTION] Manual OPEN camera now!")
-        manual_open = True
+    if msg.topic == 'house/camera':
+        if msg_str == 'OPEN':
+            print("[ACTION] Manual OPEN camera now!")
+            manual_open = True
+        elif msg_str == 'CLOSE':
+            print("[ACTION] Turn OFF camera trigger and terminate camera process")
+            camera_enabled = False
+            if camera_process and camera_process.poll() is None:
+                print("[ACTION] Terminating camera process...")
+                camera_process.terminate()
+                camera_process = None
+        elif msg_str == 'AUTO':
+            print("[ACTION] Turn ON motion detection mode")
+            camera_enabled = True
 
-    elif msg_str == 'CLOSE':
-        print("[ACTION] Turn OFF camera trigger and terminate camera process")
-        camera_enabled = False
-        if camera_process and camera_process.poll() is None:  # If the process is still running
-            print("[ACTION] Terminating camera process...")
-            camera_process.terminate()
-            camera_process = None
-
-    elif msg_str == 'AUTO':
-        print("[ACTION] Turn ON motion detection mode")
-        camera_enabled = True
+    elif msg.topic == 'house/bird':
+        if msg_str == 'BIRD_CONFIRMED':
+            print("[BUZZER] Bird confirmed detected! Activating buzzer...")
+            buzzer.on()
+            sleep(15)  # Buzzer on 2 seconds
+            buzzer.off()
 
 client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION2)
 client.on_connect = on_connect

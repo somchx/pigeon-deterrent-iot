@@ -1,29 +1,37 @@
-import torch # type: ignore
-import cv2 # type: ignore
+import torch  # type: ignore
+import cv2  # type: ignore
 from pathlib import Path
+import paho.mqtt.client as mqtt 
+from paho.mqtt.enums import CallbackAPIVersion 
 
-# Set path
+# Set paths
 current_dir = Path(__file__).parent
-local_repo = current_dir / 'yolov5'  # โฟลเดอร์ yolov5 ที่ clone ไว้
-model_path = local_repo / 'yolov5s.pt'  # path ไปที่ไฟล์ weights yolov5s.pt
+local_repo = current_dir / 'yolov5'  # yolov5 folder (cloned repository)
+model_path = local_repo / 'yolov5s.pt'  # path to the yolov5s.pt weights file
 
 model = torch.hub.load(str(local_repo), 'custom', path=str(model_path), source='local')
 animal_classes = ['cat', 'dog', 'bird', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe']
 
 def main():
+    # === Create MQTT client first ===
+    client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION2)
+    client.username_pw_set('pk', 'iot1234')
+    client.connect('127.0.0.1', 1883, 60)
+    client.loop_start()  # Non-blocking
+
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
-        print("ไม่สามารถเปิดกล้องได้")
+        print("Cannot open the camera")
         return
 
     checking_bird = False
     bird_confirm_count = 0
-    bird_confirm_target = 30  # จำนวนครั้งที่ต้องตรวจสอบ bird ต่อเนื่อง
+    bird_confirm_target = 30  # Number of consecutive frames required to confirm bird detection
 
     while True:
         ret, frame = cap.read()
         if not ret:
-            print("ไม่สามารถอ่านเฟรมได้")
+            print("Cannot read frame")
             break
 
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -44,7 +52,7 @@ def main():
                     break  
                 
         if not checking_bird and found_bird:
-            print("ตรวจพบ 'นก' ครั้งแรก เริ่มกระบวนการยืนยัน...")
+            print("First detection of 'bird'. Starting confirmation process...")
             checking_bird = True
             bird_confirm_count = 0
 
@@ -55,7 +63,8 @@ def main():
                 bird_confirm_count = 0 
 
             if bird_confirm_count >= bird_confirm_target:
-                print("\n✅ ยืนยันแล้ว: พบ 'นก' ต่อเนื่องครบ 30 ครั้ง ปิดกล้อง!")
+                print("\n✅ Confirmed: 'Bird' detected continuously for 30 frames. Closing the camera!")
+                client.publish('house/bird', 'BIRD_CONFIRMED')  # Now client exists here
                 break
 
         cv2.imshow('Pigeon Detect', frame)

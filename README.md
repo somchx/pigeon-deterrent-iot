@@ -1,6 +1,6 @@
 # pigeon-deterrent-iot
 
-# === Flood Detection & Camera Control - Run Instructions ===
+=== Flood Detection & Camera Control - Run Instructions ===
 
 1. Install required Python packages:
    `pip install gpiozero paho-mqtt`
