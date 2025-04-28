@@ -1,5 +1,5 @@
-import torch
-import cv2
+import torch # type: ignore
+import cv2 # type: ignore
 from pathlib import Path
 
 # Set path
@@ -7,10 +7,7 @@ current_dir = Path(__file__).parent
 local_repo = current_dir / 'yolov5'  # โฟลเดอร์ yolov5 ที่ clone ไว้
 model_path = local_repo / 'yolov5s.pt'  # path ไปที่ไฟล์ weights yolov5s.pt
 
-# โหลดโมเดล
 model = torch.hub.load(str(local_repo), 'custom', path=str(model_path), source='local')
-
-# animal classes ที่ต้องการ
 animal_classes = ['cat', 'dog', 'bird', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe']
 
 def main():

@@ -1,4 +1,4 @@
-from tkgpio import TkCircuit
+from tkgpio import TkCircuit # type: ignore
 
 configuration = {
     "name": "My Big Project",

@@ -1,0 +1,10 @@
+# Python Environment
+env_nida/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+
+# MacOS junk
+.DS_Store
