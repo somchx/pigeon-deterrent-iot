@@ -64,20 +64,35 @@ client.loop_start()
 # ---------------- MAIN PROGRAM ----------------
 def on_motion():
     global camera_enabled, camera_process
+    print("[MOTION] Detected.")
+    led.on()
+
     if camera_enabled:
-        print("Motion detected! Launching subprocess to open the camera...")
-        camera_process = subprocess.Popen(["python3", "camera_detect.py"])
+        if not camera_process or camera_process.poll() is not None:
+            print("Launching camera subprocess...")
+            camera_process = subprocess.Popen(["python3", "camera_detect.py"])
+        else:
+            print("Camera already running. Skipping new launch.")
     else:
         print("[MOTION] Detected, but camera trigger disabled.")
 
+def on_no_motion():
+    print("[MOTION] Stopped.")
+    led.off()
+
 def main():
     global manual_open, camera_process
+
     motion_sensor.when_motion = on_motion
+    motion_sensor.when_no_motion = on_no_motion
 
     while True:
         if manual_open:
-            print("[MANUAL] Open the camera via MQTT command...")
-            camera_process = subprocess.Popen(["python3", "camera_detect.py"])
+            if not camera_process or camera_process.poll() is not None:
+                print("[MANUAL] Open the camera via MQTT command...")
+                camera_process = subprocess.Popen(["python3", "camera_detect.py"])
+            else:
+                print("[MANUAL] Camera already running. Skipping new launch.")
             manual_open = False
 
         print("System is running, waiting for motion detection...")

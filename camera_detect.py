@@ -3,6 +3,7 @@ import cv2  # type: ignore
 from pathlib import Path
 import paho.mqtt.client as mqtt 
 from paho.mqtt.enums import CallbackAPIVersion 
+import time
 
 # Set paths
 current_dir = Path(__file__).parent
@@ -27,6 +28,8 @@ def main():
     checking_bird = False
     bird_confirm_count = 0
     bird_confirm_target = 30  # Number of consecutive frames required to confirm bird detection
+    no_object_start_time = time.time()
+    max_no_object_duration = 30  # seconds
 
     while True:
         ret, frame = cap.read()
@@ -39,9 +42,13 @@ def main():
 
         found_bird = False
 
+        found_any_object = False 
+
         for *box, conf, cls in results.xyxy[0]:
             label = model.names[int(cls)]
             if label in animal_classes:
+                found_any_object = True 
+
                 x1, y1, x2, y2 = map(int, box)
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 cv2.putText(frame, f'{label} {conf:.2f}', (x1, y1 - 10),
@@ -49,7 +56,16 @@ def main():
 
                 if label == 'bird':
                     found_bird = True
-                    break  
+                    break
+
+        if found_any_object:
+            no_object_start_time = time.time()
+        else:
+            elapsed = time.time() - no_object_start_time
+            if elapsed > max_no_object_duration:
+                print(f"\n⏳ No object detected for {int(elapsed)} seconds. Exiting camera.")
+                break
+
                 
         if not checking_bird and found_bird:
             print("First detection of 'bird'. Starting confirmation process...")

@@ -1,14 +1,14 @@
 from tkgpio import TkCircuit # type: ignore
 
 configuration = {
-    "name": "My Big Project",
+    "name": "Pigeon Detect Project",
     "width": 700,
     "height": 550,
     "leds": [
         {
-            "x": 400,
-            "y": 110,
-            "name": "LED 2",
+            "x": 290,
+            "y": 180,
+            "name": "Pigeon Detect Status",
             "pin": 22
         }
     ],
