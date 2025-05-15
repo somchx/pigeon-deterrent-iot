@@ -15,7 +15,7 @@ manual_open = False    # Normally no manual camera open yet
 camera_process = None  # To store the camera subprocess
 
 # ---------------- MQTT CONFIG ----------------
-BROKER = "127.0.0.1"
+BROKER = "192.168.1.140"
 PORT = 1883
 USERNAME = "pk"
 PASSWORD = "iot1234"
@@ -24,7 +24,7 @@ TOPIC_SUB = "house/camera"
 def on_connect(client, userdata, flags, reason_code, properties):
     print(f"[MQTT] Connected with result code {reason_code}")
     client.subscribe("house/camera")
-    client.subscribe("house/bird")  # <== Subscribe new topic
+    client.subscribe("house/bird") 
 
 def on_message(client, userdata, msg):
     global manual_open, camera_enabled, camera_process
